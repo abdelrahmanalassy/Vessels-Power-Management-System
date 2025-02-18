@@ -1,4 +1,4 @@
-# Vessel Power Management System with Database Integration
+# Vessels Power Management System with Database Integration
 
 This is a C# console application that manages vessel records and their power calculations, using a **SQL Server database**.
 
