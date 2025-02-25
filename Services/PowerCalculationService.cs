@@ -15,48 +15,59 @@ namespace VesselPowerManagement.Services
 
         public void AddPowerCalculation()
         {
-            Console.Write("Enter Vessel ID: ");
-            if (!int.TryParse(Console.ReadLine(), out int vesselId))
-            {
-                Console.WriteLine("Invalid Vassel ID! Please enter a valid ID.");
-                return;
-            }
-            using (SqlConnection connection = _databaseService.Getconnection())
-            {
-                connection.Open();
-                // Add Validation
-                string checkVesselQuery = "SELECT COUNT(*) FROM PowerCalculations WHERE Id = @VesselId";
-                using (SqlCommand checkCommand = new SqlCommand(checkVesselQuery, connection))
-                {
-                    checkCommand.Parameters.AddWithValue("@vesselId", vesselId);
-                    int count = (int)checkCommand.ExecuteScalar();
+            int vesselId;
+            decimal enginePower, fuelConsumption, speed;
 
-                    if (count == 0)
+            Console.Write("Enter Vessel ID: ");
+            while (!int.TryParse(Console.ReadLine(), out vesselId))
+            {
+                Console.Write("Invalid input! Please enter a valid Vessel ID: ");
+            }
+
+            Console.Write("Enter Engine Power(KW): ");
+            while (!decimal.TryParse(Console.ReadLine(), out enginePower))
+            {
+                Console.Write("Invalid input. Enter a valid number: ");
+            }
+
+            Console.Write("Enter Fuel Consumption (tons/hour): ");
+            while (!decimal.TryParse(Console.ReadLine(), out fuelConsumption))
+            {
+                Console.Write("Invalid input. Enter a valid number: ");
+            }
+
+            Console.Write("Enter speed (Knots): ");
+            while (!decimal.TryParse(Console.ReadLine(), out speed))
+            {
+                Console.Write("Invalid input. Enter a valid number: ");
+            }
+
+            try
+            {
+                using (SqlConnection connection = _databaseService.GetConnection())
+                {
+                    connection.Open();
+                    string query = @"
+                    INSERT INTO PowerCalculations (VesselId, EnginePower, FuelConsumption, Speed)
+                    VALUES (@VesselId, @EnginePower, @FuelConsumption, @Speed)";
+
+                    using (SqlCommand command = new SqlCommand(query, connection))
                     {
-                        Console.WriteLine("Error: This Vassel already has a power calculation record.");
-                        return;
+                        command.Parameters.AddWithValue("@VesselId", vesselId);
+                        command.Parameters.AddWithValue("@EnginePower", enginePower);
+                        command.Parameters.AddWithValue("@FuelConsumption", fuelConsumption);
+                        command.Parameters.AddWithValue("@Speed", speed);
+                        command.ExecuteNonQuery();
                     }
                 }
-                Console.Write("Enter Engine Power (KW): ");
-                decimal enginePower = decimal.Parse(Console.ReadLine());
 
-                Console.Write("Enter Fuel Consumption (tons/hour): ");
-                decimal fuelConsumption = decimal.Parse(Console.ReadLine());
-
-                Console.Write("Enter Speed (Knots): ");
-                decimal speed = decimal.Parse(Console.ReadLine());
-
-                string insertQuery = "INSERT INTO PowerCalculations (VesselId, EnginePower, FuelConsumption, Speed) VALUES (@VesselId, @EnginePower, @FuelConsumption, @Speed)";
-                using (SqlCommand command = new SqlCommand(insertQuery, connection))
-                {
-                    command.Parameters.AddWithValue("@VesselId", vesselId);
-                    command.Parameters.AddWithValue("@EnginePower", enginePower);
-                    command.Parameters.AddWithValue("@FuelConsumption", fuelConsumption);
-                    command.Parameters.AddWithValue("@Speed", speed);
-                    command.ExecuteNonQuery();
-                }
+                Console.WriteLine("Power calculations added successfully!");
             }
-            Console.WriteLine("Power calculations added successfuly!");
+
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
         }
     }
 }

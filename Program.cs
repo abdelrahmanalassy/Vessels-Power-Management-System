@@ -1,20 +1,19 @@
 ﻿using System;
+using Microsoft.Extensions.Configuration;
 using VesselPowerManagement.Services;
 
 class Program
 {
     static void Main()
     {
-        string connectionString = "Server=DESKTOP-AUM63T7\\SQLEXPRESS;Database=VesselDB;Integrated Security=True;";
-
-        DatabaseService databaseService = new DatabaseService(connectionString);
+        DatabaseService databaseService = new DatabaseService();
         VesselService vesselService = new VesselService(databaseService);
         PowerCalculationService powerCalculationService = new PowerCalculationService(databaseService);
 
         // Ask the user to choose an option
         while (true)
         {
-            Console.WriteLine("\n--- Vessel Power Management System ---");
+            Console.WriteLine("\n--- Vessels Power Management System ---");
             Console.WriteLine("1. Add a new Vessel");
             Console.WriteLine("2. Add power calculations to a Vessel");
             Console.WriteLine("3. Display all Vessels with average power efficiency");
@@ -25,10 +24,8 @@ class Program
             Console.WriteLine("8. Exit the program");
             Console.Write("Enter your choice: ");
 
-            string choice = Console.ReadLine();
-
             // Results that selected by user
-            switch (choice)
+            switch (Console.ReadLine())
             {
                 case "1":
                     vesselService.AddVessel();

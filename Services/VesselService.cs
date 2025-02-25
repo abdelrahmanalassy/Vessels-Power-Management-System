@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Security.Cryptography;
+using System.Linq;
+using VesselPowerManagement.Models;
 
 namespace VesselPowerManagement.Services
 {
@@ -13,76 +15,152 @@ namespace VesselPowerManagement.Services
             _databaseService = databaseService;
         }
 
-        // Add a new Vessel
+        // Add a new Vessel 
         public void AddVessel()
         {
-            Console.WriteLine("Enter Vessel Name: ");
+            Console.Write("Enter Vessel Name: ");
             string name = Console.ReadLine();
 
-            Console.WriteLine("Enter Vessel Type: ");
+            Console.Write("Enter Vessel Type: ");
             string type = Console.ReadLine();
 
-            using (SqlConnection connection = _databaseService.Getconnection())
+            try
             {
-                connection.Open();
-                // Add Validation
-                string checkQuery = "SELECT COUNT(*) FROM Vessels WHERE Name = @Name";
-                using (SqlCommand checkCommand = new SqlCommand(checkQuery, connection))
+                using (SqlConnection connection = _databaseService.GetConnection())
                 {
-                    checkCommand.Parameters.AddWithValue("@Name", name);
-                    int count = (int)checkCommand.ExecuteScalar();
+                    // First, Check is the Vessel name that the user enterd is exist or not?
+                    connection.Open();
+                    string checkQuery = "SELECT COUNT(*) FROM Vessels WHERE Name = @Name";
 
-                    if (count > 0)
+                    using (SqlCommand checkcommand = new SqlCommand(checkQuery, connection))
                     {
-                        Console.WriteLine("Vassel already exists! Try another name.");
-                        return;
+                        checkcommand.Parameters.AddWithValue("@Name", name);
+                        int existingCount = (int)checkcommand.ExecuteScalar();
+
+                        if (existingCount > 0)
+                        {
+                            Console.WriteLine("Error: A Vessel with this name already exists.");
+                            return;
+                        }
+                    }
+
+                    // Add a new Vessel if the vessel enterd not exists
+                    string insertQuery = @"
+                    INSERT INTO Vessels (Name, Type)
+                    VALUES (@Name, @Type)";
+
+                    using (SqlCommand command = new SqlCommand(insertQuery, connection))
+                    {
+                        command.Parameters.AddWithValue("@Name", name);
+                        command.Parameters.AddWithValue("@Type", type);
+                        command.ExecuteNonQuery();
                     }
                 }
 
-                string insertQuery = "INSERT INTO Vessels (Name, Type) VALUES (@Name, @Type)";
-                using (SqlCommand command = new SqlCommand(insertQuery, connection))
-                {
-                    command.Parameters.AddWithValue("@Name", name);
-                    command.Parameters.AddWithValue("@Type", type);
-                    command.ExecuteNonQuery();
-                }
-
+                Console.WriteLine("Vessel added successfully!");
             }
 
-            Console.WriteLine("Vessel added successfully!");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
         }
 
-        //Display all Vessels with efficiency calculations
+        //Display all Vessels with efficiency calculations "By Using LINQ"
         public void DisplayAllVessels()
         {
-            using (SqlConnection connection = _databaseService.Getconnection())
+            try
             {
-                connection.Open();
-                string query = "SELECT V.Id, V.Name, V.Type, COALESCE(AVG(P.Speed / NULLIF(P.FuelConsumption, 0)), 0) AS Efficiency " + "FROM Vessels V LEFT JOIN PowerCalculations P ON V.Id = P.VesselId " + "GROUP BY V.Id, V.Name, V.Type";
-                
-                using (SqlCommand command = new SqlCommand(query, connection))
+                List<Vessel> vessels = new List<Vessel>();
+                List<PowerCalculation> calculations = new List<PowerCalculation>();
+
+                using (SqlConnection connection = _databaseService.GetConnection())
                 {
+                    connection.Open();
+                    string vesselQuery = @"
+                    SELECT Id, Name, Type 
+                    FROM Vessels";
+
+                    using (SqlCommand command = new SqlCommand(vesselQuery, connection))
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            Console.WriteLine($"ID: {reader["Id"]}, Name: {reader["Name"]}, Type: {reader["Type"]}, Efficiency: {reader["Efficiency"]:0.00} Knots per ton of fuel");
+                            vessels.Add(new Vessel
+                            {
+                                Id = reader.GetInt32(0),
+                                Name = reader.GetString(1),
+                                Type = reader.GetString(2)
+                            });
+                        }
+                    }
+
+                    string powerQuery = @"
+                    SELECT VesselId, EnginePower
+                    FROM PowerCalculations";
+
+                    using(SqlCommand command1 = new SqlCommand(powerQuery, connection))
+                    using(SqlDataReader reader = command1.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            calculations.Add(new PowerCalculation
+                            {
+                                VesselId = reader.GetInt32(0),
+                                EnginePower = reader.GetDecimal(1)
+                            });
                         }
                     }
                 }
+
+                var vesselStats = vessels.Select(v => new
+                {
+                    v.Id,
+                    v.Name,
+                    v.Type,
+                    AvgEnginePower = calculations
+                    .Where(p => p.VesselId == v.Id)
+                    .Select(p => (decimal?)p.EnginePower)
+                    .DefaultIfEmpty(null)
+                    .Average() ?? 0,
+
+                    Efficiency = (calculations
+                    .Where(P => P.VesselId == v.Id)
+                    .Select(p => (decimal?)p.EnginePower)
+                    .DefaultIfEmpty(null)
+                    .Average() ?? 0) / 1000
+                });
+
+                Console.WriteLine("\n--- Vessel List with Average Engine Power ---");
+                foreach (var v in vesselStats)
+                {
+                    Console.WriteLine($"ID: {v.Id}, Name: {v.Name}, Type: {v.Type}, Efficiency: {v.Efficiency:F2} knots per ton of fuel");
+                }
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
 
-        // To search for Vessel via ID
+        // To search for Vessel via ID with validate that the input is text instead of num
         public void FindVesselById()
         {
-            Console.WriteLine("Enter Vessel ID: ");
-            int vesselId = int.Parse(Console.ReadLine());
+            Console.Write("Enter Vessel ID: ");
+            if (!int.TryParse(Console.ReadLine(), out int vesselId))
+            {
+                Console.WriteLine("Invalid input. Please enter a valid Vessel ID");
+                return;
+            }
 
-            using (SqlConnection connection = _databaseService.Getconnection())
+            using (SqlConnection connection = _databaseService.GetConnection())
             {
                 connection.Open();
-                string query = "SELECT * FROM Vessels WHERE Id = @Id";
+                string query = @"
+                SELECT Id, Name, Type 
+                FROM Vessels 
+                WHERE Id = @Id";
 
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {
@@ -99,7 +177,7 @@ namespace VesselPowerManagement.Services
                         }
                     }
                 }
-            } 
+            }
         }
 
         // Search for a vessel
@@ -108,7 +186,7 @@ namespace VesselPowerManagement.Services
             Console.Write("Enter Vessel Name or Type to sesrch: ");
             string searchTerm = Console.ReadLine();
 
-            using (SqlConnection connection = _databaseService.Getconnection())
+            using (SqlConnection connection = _databaseService.GetConnection())
             {
                 connection.Open();
                 string query = "SELECT * FROM Vessels WHERE Name LIKE @Search OR Type LIKE @Search";
@@ -128,11 +206,15 @@ namespace VesselPowerManagement.Services
             }
         }
 
-        // To update vessels
+        // To update vessels with validate the inputs
         public void UpdateVeseel()
         {
             Console.Write("Enter Vessel ID to update: ");
-            int vesselId = int.Parse(Console.ReadLine());
+            if (!int.TryParse(Console.ReadLine(), out int vesselId))
+            {
+                Console.WriteLine("Invalid input. Please enter a valid Vessel ID.");
+                return;
+            }
 
             Console.Write("Enter new Vessel Name: ");
             string newName = Console.ReadLine();
@@ -140,10 +222,13 @@ namespace VesselPowerManagement.Services
             Console.Write("Enter new Vessel Type: ");
             string newType = Console.ReadLine();
 
-            using (SqlConnection connection = _databaseService.Getconnection())
+            using (SqlConnection connection = _databaseService.GetConnection())
             {
                 connection.Open();
-                string query = "UPDATE Vessels SET Name = @Name, Type = @Type WHERE Id = @Id";
+                string query = @"
+                UPDATE Vessels 
+                SET Name = @Name, Type = @Type 
+                WHERE Id = @Id";
 
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {
@@ -154,7 +239,7 @@ namespace VesselPowerManagement.Services
                 }
             }
 
-            Console.WriteLine("Vessel updated successfully!");
+            Console.WriteLine("Vessel Updated Successfully!");
         }
 
         // To delete vessel
@@ -163,14 +248,14 @@ namespace VesselPowerManagement.Services
             Console.Write("Enter a vessel ID to delete: ");
             int vesselId = int.Parse(Console.ReadLine());
 
-            using (SqlConnection connection = _databaseService.Getconnection())
+            using (SqlConnection connection = _databaseService.GetConnection())
             {
                 connection.Open();
                 string query = "DELETE FROM Vessels WHERE Id = @Id";
 
                 using (SqlCommand command = new SqlCommand(query, connection))
                 {
-                    command.Parameters.AddWithValue("@Id", vesselId);   
+                    command.Parameters.AddWithValue("@Id", vesselId);
                     command.ExecuteNonQuery();
                 }
             }

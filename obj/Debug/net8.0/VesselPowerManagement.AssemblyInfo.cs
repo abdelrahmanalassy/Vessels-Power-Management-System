@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VesselPowerManagement")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+582d35d862358eb8b5b25b523f4ba640d521e810")]
 [assembly: System.Reflection.AssemblyProductAttribute("VesselPowerManagement")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VesselPowerManagement")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
