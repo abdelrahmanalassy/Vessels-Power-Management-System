@@ -56,55 +56,79 @@ Enter your choice:
 `1. Add a new Vessel`
 ```sql
 Enter your choice: 1
-Enter Vessel Name: 
-Sea Marine 4
-Enter Vessel Type: 
-Passenger 4
+Enter Vessel Name: Liberty
+Enter Vessel Type: Fishing
 Vessel added successfully!
+```
+`When enter a text instead of num`
+```sql
+Enter your choice: 1
+Enter Vessel Name: Liberty
+Enter Vessel Type: Fishing
+Error: A Vessel with this name already exists.
 ```
 `2. Add power calculations to a Vessel`
 ```sql
 Enter your choice: 2
-Enter Vessel ID: 17
-Enter Engine Power (KW): 2324
-Enter Fuel Consumption (tons/hour): 2324
-Enter Speed (Knots): 543
-Power calculations added successfuly!
+Enter Vessel ID: 23
+Enter Engine Power(KW): 190
+Enter Fuel Consumption (tons/hour): 249.8
+Enter speed (Knots): 304.9
+Power calculations added successfully!
+```
+`When enter a text instead of num`
+```sql
+Enter your choice: 2
+Enter Vessel ID: Test text input
+Invalid input! Please enter a valid Vessel ID: 
 ```
 `3. Display all Vessels with average power efficiency`
 ```sql
-Enter your choice: 3
-ID: 11, Name: Sea Explorer, Type: Cargo, Efficiency: 29.26 Knots per ton of fuel
-ID: 12, Name: Ocean King, Type: Tanker, Efficiency: 6.86 Knots per ton of fuel
-ID: 14, Name: Deep Blue, Type: Fishing, Efficiency: 1.04 Knots per ton of fuel
-ID: 16, Name: Sea Marine, Type: Fishing 2, Efficiency: 10.05 Knots per ton of fuel
-ID: 17, Name: Sea Marine 4, Type: Passenger 4, Efficiency: 0.23 Knots per ton of fuel
+ID: 11, Name: Sea Explorer, Type: Cargo, Efficiency: 0.38 knots per ton of fuel
+ID: 12, Name: Ocean King, Type: Tanker, Efficiency: 0.24 knots per ton of fuel
+ID: 14, Name: Deep Blue Num two, Type: Tanker Two, Efficiency: 0.23 knots per ton of fuel
+ID: 16, Name: Sea Marine, Type: Fishing 2, Efficiency: 2.31 knots per ton of fuel
+ID: 20, Name: Abdelrahman, Type: Testing, Efficiency: 0.23 knots per ton of fuel
+ID: 21, Name: Ashraf, Type: Tanker, Efficiency: 0.00 knots per ton of fuel
+ID: 22, Name: Sea Blue, Type: Fishing, Efficiency: 0.46 knots per ton of fuel
+ID: 23, Name: Liberty, Type: Fishing, Efficiency: 0.19 knots per ton of fuel
 ```
 `4. Find a Vessel by ID`
 ```sql
 Enter your choice: 4
-Enter Vessel ID: 
-17
-ID: 17, Name: Sea Marine 4, Type: Passenger 4
+Enter Vessel ID: 23
+ID: 23, Name: Liberty, Type: Fishing
+```
+`When enter a text instead of ID num`
+```sql
+Enter your choice: 4
+Enter Vessel ID: Test text input
+Invalid input. Please enter a valid Vessel ID
 ```
 `5. Search for a Vessel`
 ```sql
 Enter your choice: 5
-Enter Vessel Name or Type to sesrch: Deep Blue
-ID: 14, Name: Deep Blue, Type: Fishing
+Enter Vessel Name or Type to sesrch: Liberty
+ID: 23, Name: Liberty, Type: Fishing
 ```
 `6. Update vessel details`
 ```sql
 Enter your choice: 6
-Enter Vessel ID to update: 17
-Enter new Vessel Name: Marine 5
-Enter new Vessel Type: Type 5
-Vessel updated successfully!
+Enter Vessel ID to update: 23
+Enter new Vessel Name: Sea Hawk
+Enter new Vessel Type: Tanker
+Vessel Updated Successfully!
+```
+`When enter a text instead of ID num`
+```sql
+Enter your choice: 6
+Enter Vessel ID to update: Test text input
+Invalid input. Please enter a valid Vessel ID.
 ```
 `7. Delete Vessel`
 ```sql
 Enter your choice: 7
-Enter a vessel ID to delete: 17
+Enter a vessel ID to delete: 20
 Vessel deleted successfuly!
 ```
 `8. Exit the program`
